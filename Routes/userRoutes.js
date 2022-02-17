@@ -49,8 +49,50 @@ router.post('/signup', async(req, res) => {
     }
 });
 
-router.put('/update/:id', authorization, async(req, res) => {
-    const {error} = validateUserPut(req.body);
+router.put('/updatefullname/:id', authorization, async(req, res) => {
+    const {error} = validateUserFullNamePut(req.body);
+    if(error){
+        return res.status(400).send(error.details[0].message);
+    }
+
+    let user = await User.findOne({email:req.body.email});
+    if(user){
+        return res.status(400).send("This email already exists");
+    }
+    
+    let username = await User.findOne({userName:req.body.userName});
+    if(username){
+        return res.status(400).send("This username is taken");
+    }
+
+    // const salt = await bcrypt.genSalt(10);
+    // newPassword = await bcrypt.hash(req.body.password, salt);
+
+    const userUpdate = await User.findByIdAndUpdate(
+        req.params.id,
+        {
+            fullName: req.body.fullName,
+            // password: newPassword
+        },
+        {
+            new: true
+        }
+    );
+
+    if(!userUpdate){
+        return res.status(400).send("Invalid User");
+    }
+
+    res
+        .send(userUpdate)
+        .select('-password')
+        .select('-__v');
+
+
+});
+
+router.put('/updatepassword/:id', authorization, async(req, res) => {
+    const {error} = validateUserPasswordPut(req.body);
     if(error){
         return res.status(400).send(error.details[0].message);
     }
@@ -71,7 +113,7 @@ router.put('/update/:id', authorization, async(req, res) => {
     const userUpdate = await User.findByIdAndUpdate(
         req.params.id,
         {
-            fullName: req.body.fullName,
+            // fullName: req.body.fullName,
             password: newPassword
         },
         {
@@ -91,6 +133,7 @@ router.put('/update/:id', authorization, async(req, res) => {
 
 });
 
+
 router.get('/:id', validateObjectId, async(req,res) => {
     const user = await User
         .findById(req.params.id)
@@ -102,10 +145,18 @@ router.get('/:id', validateObjectId, async(req,res) => {
     res.send(user);
 })
 
-function validateUserPut(req) {
+function validateUserPasswordPut(req) {
     const schema = Joi.object({
-        fullName: Joi.string().min(8).max(40).required(),
+        // fullName: Joi.string().min(8).max(40).required(),
         password: Joi.string().min(8).max(128).required()
+    }).options({ abortEarly: false });
+    return schema.validate(req);
+}
+
+function validateUserFullNamePut(req) {
+    const schema = Joi.object({
+        fullName: Joi.string().min(8).max(40).required()
+        // password: Joi.string().min(8).max(128).required()
     }).options({ abortEarly: false });
     return schema.validate(req);
 }
