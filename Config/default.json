@@ -1,0 +1,6 @@
+{
+    "jwtPrivateKey":"unsecureKey",
+    "db":"mongodb+srv://admin:admin12345@surgeglobalassignment.s1oyn.mongodb.net/SurgeGlobalAssignment?retryWrites=true&w=majority",
+    "port":"3900",
+    "requireAuth":false
+}
